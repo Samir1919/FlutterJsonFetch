@@ -1,3 +1,11 @@
+# "Flutter Json Data Load" Testing Project 
+
+Details : https://medium.com/@nitishk72/how-to-load-json-data-in-flutter-204c7bb1873c
+
+
+
+
+
 # flutter_app
 
 A new Flutter application.
