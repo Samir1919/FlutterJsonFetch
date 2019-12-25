@@ -1,99 +1,85 @@
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'dart:async';
 import 'dart:convert';
 
-void main() => runApp(new MyApp());
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+Future<Post> fetchPost() async {
+  final response =
+  await http.get('https://jsonplaceholder.typicode.com/posts/1');
+
+  if (response.statusCode == 200) {
+    // If the call to the server was successful, parse the JSON.
+    return Post.fromJson(json.decode(response.body));
+  } else {
+    // If that call was not successful, throw an error.
+    throw Exception('Failed to load post');
+  }
+}
+
+class Post {
+  final int userId;
+  final int id;
+  final String title;
+  final String body;
+
+  Post({this.userId, this.id, this.title, this.body});
+
+  factory Post.fromJson(Map<String, dynamic> json) {
+    return Post(
+      userId: json['userId'],
+      id: json['id'],
+      title: json['title'],
+      body: json['body'],
+    );
+  }
+}
+
+void main() => runApp(MyApp());
 
 class MyApp extends StatefulWidget {
+  MyApp({Key key}) : super(key: key);
+
   @override
   _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  String name, username, avatar, location, company ;
-  int publicrepos;
-  bool isData = false;
-
-  FetchJSON() async {
-    var Response = await http.get(
-      "https://api.github.com/users/samir1919",
-      headers: {"Accept": "application/json"},
-    );
-
-    if (Response.statusCode == 200) {
-      String responseBody = Response.body;
-      var responseJSON = json.decode(responseBody);
-      username = responseJSON['login'];
-      name = responseJSON['name'];
-      avatar = responseJSON['avatar_url'];
-      location = responseJSON['location'];
-      company = responseJSON['company'];
-      publicrepos = responseJSON['public_repos'];
-      isData = true;
-      setState(() {
-        print('UI Updated');
-      });
-    } else {
-      print('Something went wrong. \nResponse Code : ${Response.statusCode}');
-    }
-  }
+  Future<Post> post;
 
   @override
   void initState() {
-    FetchJSON();
+    super.initState();
+    post = fetchPost();
   }
-
-  Widget MyUI() {
-    return new Container(
-      padding: new EdgeInsets.all(20.0),
-      child: new ListView(
-        children: <Widget>[
-          new Image.network(
-            avatar,
-            width: 400.0,
-            height: 400.0,
-          ),
-          new Padding(padding: new EdgeInsets.symmetric(vertical: 6.0)),
-          new Text(
-            'Name : $name',
-            style: Theme.of(context).textTheme.headline,
-          ),
-          new Padding(padding: new EdgeInsets.symmetric(vertical: 6.0)),
-          new Text(
-            'Username : $username',
-            style: Theme.of(context).textTheme.title,
-          ),
-          new Padding(padding: new EdgeInsets.symmetric(vertical: 6.0)),
-          new Text(
-            'Public repos : $publicrepos',
-            style: Theme.of(context).textTheme.title,
-          ),
-          new Padding(padding: new EdgeInsets.symmetric(vertical: 6.0)),
-          new Text(
-            'Company : $company',
-            style: Theme.of(context).textTheme.title,
-          ),
-          new Padding(padding: new EdgeInsets.symmetric(vertical: 6.0)),
-          new Text(
-            'Location : $location',
-            style: Theme.of(context).textTheme.title,
-          ),
-        ],
-      ),
-    );
-  }
-
 
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(
-      home: new Scaffold(
-        appBar: new AppBar(
-          title: new Text('My Github Profile'),
+    return MaterialApp(
+      title: 'Fetch Data Example',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Fetch Data Example'),
         ),
-        body:  MyUI(),
+        body: Center(
+          child: FutureBuilder<Post>(
+            future: post,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Text(snapshot.data.title);
+              } else if (snapshot.hasError) {
+                return Text("${snapshot.error}");
+              }
+
+              // By default, show a loading spinner.
+              return CircularProgressIndicator();
+            },
+          ),
+        ),
       ),
     );
   }
-
 }
